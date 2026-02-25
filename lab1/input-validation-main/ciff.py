@@ -184,52 +184,51 @@ class CIFF:
         new_ciff = CIFF()
         bytes_read = 0
         # the following code can throw Exceptions at multiple lines
-        # TODO: surround the parsing code with a try-except block and
-        # TODO: set the is_valid property to False
-        # TODO: if an Exception has been raised
+        ## TODO: surround the parsing code with a try-except block and
+        ## TODO: set the is_valid property to False
+        ## TODO: if an Exception has been raised
         try:
             with open(file_path, "rb") as ciff_file:
                 # read the magic bytes
                 magic = ciff_file.read(4)
                 # read may not return the requested number of bytes
-                # TODO: magic must contain 4 bytes. If not, raise Exception
+                ## TODO: magic must contain 4 bytes. If not, raise Exception
                 if len(magic) != 4:
                     raise Exception("File too short for magic characters")
                 bytes_read += 4
                 # decode the bytes as 4 characters
                 new_ciff.magic = magic.decode('ascii')
-                # TODO: the magic must be "CIFF". If not, raise Exception
+                ## TODO: the magic must be "CIFF". If not, raise Exception
                 if new_ciff.magic != "CIFF":
                     new_ciff.is_valid = False 
                     raise Exception("Invalid magic characters, expected 'CIFF'")
 
                 # read the header size
                 h_size = ciff_file.read(8)
-                # TODO: h_size must contain 8 bytes. If not, raise Exception
-                #if len(____) != ____:
-                #    raise ____
+                ## TODO: h_size must contain 8 bytes. If not, raise Exception
+                if len(h_size) != 8:
+                    raise Exception("File too short for header size")
                 bytes_read += 8
                 # interpret the bytes as an 8-byte-long integer
                 # unpack returns a list
                 # HINT: check the "q" format specifier!
                 # HINT: Does it fit our purposes?
-                new_ciff.header_size = struct.unpack("q", h_size)[0]
+                new_ciff.header_size = struct.unpack("Q", h_size)[0]
                 # the header size must be in [38, 2^64 - 1]
-                # TODO: check the value range. If not in range, raise Exception
-                #if new_ciff.header_size < ____ \
-                #        or new_ciff.header_size > ____:
-                #    ____
+                ## TODO: check the value range. If not in range, raise Exception
+                if new_ciff.header_size < 38:
+                    raise Exception("Header size out of range, must be at least 38")
 
                 # read the content size
                 c_size = ciff_file.read(8)
-                # TODO: c_size must contain 8 bytes. If not, raise Exception
-                #if len(____) != ____:
-                #    ____
+                ## TODO: c_size must contain 8 bytes. If not, raise Exception
+                if len(c_size) != 8:
+                    raise Exception("File too short for content size")
                 bytes_read += 8
                 # interpret the bytes as an 8-byte-long integer
                 # HINT: check out the "q" format specifier!
                 # HINT: Does it fit our purposes?
-                new_ciff.content_size = struct.unpack("q", c_size)[0]
+                new_ciff.content_size = struct.unpack("!", c_size)[0]
                 # the content size must be in [0, 2^64 - 1]
                 # TODO: check the value range. If not in range, raise Exception
                 # Question: is this check necessary?
@@ -239,39 +238,39 @@ class CIFF:
 
                 # read the width
                 width = ciff_file.read(8)
-                # TODO: check if width contains 8 bytes
-                #if ____ != ____:
-                #    ____
+                ## TODO: check if width contains 8 bytes
+                if width != 8:
+                    raise Exception("File too short for width size")
                 bytes_read += 8
                 # interpret the bytes as an 8-byte-long integer
                 # HINT: check out the "q" format specifier!
                 # HINT: Does it fit our purposes?
-                new_ciff.width = struct.unpack("q", width)[0]
+                new_ciff.width = struct.unpack("Q", width)[0]
                 # the width must be in [0, 2^64 - 1]
-                # TODO: check the value range. If not in range, raise Exception
+                ## TODO: check the value range. If not in range, raise Exception
                 # Question: is this check necessary?
                 #if ____:
                 #    ____
 
                 # read the height
                 height = ciff_file.read(8)
-                # TODO: check if height contains 8 bytes
-                #if ____:
-                #    ____
+                ## TODO: check if height contains 8 bytes
+                if height:
+                    raise Exception("File too short for height size")
                 bytes_read += 8
                 # interpret the bytes as an 8-byte-long integer
                 # HINT: check out the "q" format specifier!
                 # HINT: Does it fit our purposes?
-                new_ciff.height = struct.unpack("q", height)[0]
+                new_ciff.height = struct.unpack("Q", height)[0]
                 # the height must be in [0, 2^64 - 1]
-                # TODO: check the value range
+                ## TODO: check the value range
                 # Question: is this check necessary?
                 #____
                 #    ____
 
                 # TODO: content size must equal width*height*3
-                #if ____:
-                #    ____
+                if new_ciff.content_size != width * height * 3:
+                    raise Exception("Content size does not match width * height * 3")
 
                 # read the name of the image character by character
                 caption = ""
