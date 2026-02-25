@@ -1,4 +1,8 @@
+#pdf
 *.pdf
+
+# binary
+p 
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
