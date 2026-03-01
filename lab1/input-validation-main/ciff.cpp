@@ -5,6 +5,8 @@
 #include <tuple>
 #include <vector>
 #include <stdexcept>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 using namespace std;
 
@@ -150,18 +152,21 @@ public:
     }
 };
 
-int main() {
-    string test_file = "test-vectors/test1.ciff";
+namespace py = pybind11;
 
-    CIFF my_image = CIFF::parse_ciff_file(test_file);
+PYBIND11_MODULE(ciff, m) {
+    m.doc() = "C++ parser for CIFF images";
 
-    if (my_image.is_valid) {
-        cout << "VALID" << endl;
-        cout << "Kep merete: " << my_image.width << "x" << my_image.height << endl;
-        cout <<  my_image.caption << endl;
-    } else {
-        cout << "Nem ervenyes" << endl;
-    }
-
-    return 0;
+    py::class_<CIFF>(m, "CIFF")
+        .def(py::init<>())
+        .def_readwrite("magic", &CIFF::magic)
+        .def_readwrite("header_size", &CIFF::header_size)
+        .def_readwrite("content_size", &CIFF::content_size)
+        .def_readwrite("width", &CIFF::width)
+        .def_readwrite("height", &CIFF::height)
+        .def_readwrite("caption", &CIFF::caption)
+        .def_readwrite("tags", &CIFF::tags)
+        .def_readwrite("pixels", &CIFF::pixels)
+        .def_readwrite("is_valid", &CIFF::is_valid)
+        .def_static("parse_ciff_file", &CIFF::parse_ciff_file);
 }
