@@ -19,3 +19,13 @@ or
 ```bash
 python3 moodle_submission.py
 ```
+
+## Compile and Run the C++ parser
+```bash
+pip install -r requirements.txt
+python3 setup.py build_ext --inplace
+#This creates a .so file that Python can use instead of ciff.py. I renamed the ciff.py file to ciff_old.py, because otherwise it would not recognize the new .so file.
+
+#Run
+python3 view.py # automatically recognizes the .so file and uses it.
+```
