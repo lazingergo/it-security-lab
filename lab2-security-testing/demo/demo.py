@@ -7,16 +7,16 @@ class BankAccount:
         self.account_number = account_number
         self.balance = initial_balance
     
-    def deposit(self, amount):
+    def deposit(self, amount: int) -> None:
         self.balance += amount
     
-    def withdraw(self, amount):
+    def withdraw(self, amount: int) -> None:
         self.balance -= amount
     
-    def is_overdrawn(self):
+    def is_overdrawn(self) -> bool:
         return self.balance < 0
     
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Balance of {self.owner} (account number: {self.account_number}) is: {self.balance}"
 
 
@@ -25,4 +25,4 @@ account.withdraw(5)
 print(account)
 
 # wrong function call
-#account.deposit("test")
+account.deposit("test")
