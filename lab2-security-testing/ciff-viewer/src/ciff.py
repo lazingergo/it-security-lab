@@ -254,6 +254,9 @@ class CIFF:
 
                 #TODO: maybe something is missing here
 
+                if new_ciff.content_size != (new_ciff.width * new_ciff.height * 3):
+                    raise Exception("Content size does not match width * height * 3")
+
                 # read the name of the image character by character
                 caption = ""
                 c = ciff_file.read(1)
@@ -298,7 +301,8 @@ class CIFF:
                 for tag in tags:
                     if tag[-1] != '\0':
                         raise Exception("Tag terminating character error")
-                new_ciff.tags = tags
+                #new_ciff.tags = tag
+                new_ciff.tags = tags 
 
                 # read the pixels
                 while bytes_read < new_ciff.header_size+new_ciff.content_size:
