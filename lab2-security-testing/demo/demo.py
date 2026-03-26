@@ -1,8 +1,8 @@
-
+from typing import Tuple
 
 class BankAccount:
     
-    def __init__(self, owner, account_number, initial_balance = 0):
+    def __init__(self, owner: str, account_number: Tuple[int,int,int], initial_balance:int = 0) -> None:
         self.owner = owner
         self.account_number = account_number
         self.balance = initial_balance
@@ -25,4 +25,4 @@ account.withdraw(5)
 print(account)
 
 # wrong function call
-account.deposit("test")
+#account.deposit("test")
