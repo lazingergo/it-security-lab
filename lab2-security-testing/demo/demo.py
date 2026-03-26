@@ -25,4 +25,4 @@ account.withdraw(5)
 print(account)
 
 # wrong function call
-account.deposit("test")
+#account.deposit("test")
