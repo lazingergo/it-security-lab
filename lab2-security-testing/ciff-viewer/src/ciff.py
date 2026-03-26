@@ -216,6 +216,8 @@ class CIFF:
                 new_ciff.header_size = struct.unpack("Q", h_size)[0]
                 
                 #TODO: maybe something is missing here
+                if new_ciff.header_size < 38:
+                    raise Exception("Header size out of range, must be at least 38")
 
                 # read the content size
                 c_size = ciff_file.read(8)
