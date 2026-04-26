@@ -93,6 +93,45 @@ crysys@crysys-virtualbox:~/itsec/it-security-lab/lab3-memory-corruption/task-1$
 ## Task-2
 
 
+```bash
+(gdb) print now_called
+$1 = {void (char *)} 0x8049186 <now_called>
+(gdb) find &main, +100000 "/bin/sh"
+A syntax error in expression, near `"/bin/sh"'.
+(gdb) find &main, +100000, "/bin/sh"
+warning: Unable to access 16007 bytes of target memory at 0x80491dd, halting search.
+Pattern not found.
+(gdb) print not_used
+$2 = 0x804a008 "/bin/sh"
+(gdb) 
+```
+
+Stack a tamadas elott: 
+
+(gdb) x/24xw $esp
+0xffffcebc:     0x00000000      0x00000000      0x0804bff4      0xffffced8
+0xffffcecc:     0x08049216      0xffffd1bf      0xf7fa0e34      0x00000000
+0xffffcedc:     0xf7d9cc75      0x00000002      0xffffcf94      0xffffcfa0
+0xffffceec:     0xffffcf00      0xf7fa0e34      0x0804909d      0x00000002
+0xffffcefc:     0xffffcf94      0xf7fa0e34      0xffffcfa0      0xf7ffcb60
+0xffffcf0c:     0x00000000      0x9d3d7523      0xd138df33      0x00000000
+(gdb) 
+
+
+A visszateritesi cim
+
+0xfffcebc + 16 = 0xffffcecc
+
+
+Stack tamadas utan
+
+
+
+
+
+
+
+
 
 
 
