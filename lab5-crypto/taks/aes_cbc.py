@@ -95,16 +95,15 @@ else:
     
     # derive the 32-byte key from the passphrase 
     # using PBKDF2 with the salt and iteration count 100000
-    # TODO: key = ...
+    key = KDF.PBKDF2(passphrase, salt, dkLen=32, count=100000)
 
     # create an AES-CBC cipher object for decrypting the ciphertext 
-    # TODO: aes_cbc = ... 
+    aes_cbc = AES.new(key, AES.MODE_CBC, iv)
 	
     # decrypt the ciphertext and remove padding
     try:
-        # TODO: padded_plaintext = __.decrypt(__)
-        # TODO: plaintext = __.unpad(__, __, style=__)
-        pass # TODO: remove this line!
+        padded_plaintext = aes_cbc.decrypt(ciphertext)
+        plaintext = Padding.unpad(padded_plaintext, 16, style='pkcs7')
     except ValueError:
         print('Error: Decryption failed.')
         sys.exit(1)
